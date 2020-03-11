@@ -7,10 +7,15 @@ import math
 import re
 import ast
 
+
+debug = False
+
+
 def layoutparser(layout):
     layout = re.sub(r'(\w+):', r'"\1":', layout)
 
     return ast.literal_eval(layout)
+
 
 def draw_rect(lines, arcs, x, y, w, h, u, r=0):
     cx = x * u + w * u / 2
@@ -19,20 +24,17 @@ def draw_rect(lines, arcs, x, y, w, h, u, r=0):
     angle = 90*(math.pi/180)
 
     if r > 0:
-        # lines.addByTwoPoints(adsk.core.Point3D.create(cx - 7 + r, cy - 7, 0), adsk.core.Point3D.create(cx + 7 - r, cy - 7, 0))
-        # lines.addByTwoPoints(adsk.core.Point3D.create(cx - 7 + r, cy + 7, 0), adsk.core.Point3D.create(cx + 7 - r, cy + 7, 0))
-        # lines.addByTwoPoints(adsk.core.Point3D.create(cx - 7, cy - 7 + r, 0), adsk.core.Point3D.create(cx - 7, cy + 7 - r, 0))
-        # lines.addByTwoPoints(adsk.core.Point3D.create(cx + 7, cy - 7 + r, 0), adsk.core.Point3D.create(cx + 7, cy + 7 - r, 0))
-
-        # arcs.addByCenterStartSweep(adsk.core.Point3D.create(cx - 7 + r, cy - 7 + r, 0), adsk.core.Point3D.create(cx - 7, cy - 7 + r, 0), angle)
-        # arcs.addByCenterStartSweep(adsk.core.Point3D.create(cx - 7 + r, cy + 7 - r, 0), adsk.core.Point3D.create(cx - 7 + r, cy + 7, 0), angle)
-        # arcs.addByCenterStartSweep(adsk.core.Point3D.create(cx + 7 - r, cy - 7 + r, 0), adsk.core.Point3D.create(cx + 7 - r, cy - 7, 0), angle)
-        # arcs.addByCenterStartSweep(adsk.core.Point3D.create(cx + 7 - r, cy + 7 - r, 0), adsk.core.Point3D.create(cx + 7, cy + 7 - r, 0), angle)
-        rect = lines.addTwoPointRectangle(adsk.core.Point3D.create(cx - 7, cy - 7, 0), adsk.core.Point3D.create(cx + 7, cy + 7, 0))
+        rect = lines.addTwoPointRectangle(adsk.core.Point3D.create(cx - .7, cy - .7, 0), adsk.core.Point3D.create(cx + .7, cy + .7, 0))
         for i in range(4):
             arcs.addFillet(rect.item(i), rect.item(i).endSketchPoint.geometry, rect.item((i+1)%4), rect.item((i+1)%4).startSketchPoint.geometry, r)
     else:
-        rect = lines.addTwoPointRectangle(adsk.core.Point3D.create(cx - 7, cy - 7, 0), adsk.core.Point3D.create(cx + 7, cy + 7, 0))
+        lines.addTwoPointRectangle(adsk.core.Point3D.create(cx - .7, cy - .7, 0), adsk.core.Point3D.create(cx + .7, cy + .7, 0))
+
+
+def copy_rect(sketch, coll, x, y, w, h, u):
+    transform = adsk.core.Matrix3D.create()
+    transform.translation = adsk.core.Vector3D.create(x * u + (w - 1) * u / 2, y * u - (h - 1) * u / 2, 0)
+    sketch.copy(coll, transform)
 
 
 def run(context):
@@ -40,8 +42,6 @@ def run(context):
     try:
         app = adsk.core.Application.get()
         ui  = app.userInterface
-
-        debug = False
 
         if debug:
             layout = [
@@ -56,17 +56,15 @@ def run(context):
                 ["",""],
                 ["",""]
             ]
-            r = '3'
+            r = '0'
         else:
             # returnValue, cancelled = ui.inputBox('Raw data from KLE:', 'PlateGen', '[{a:7},""]')
             returnValue, cancelled = ui.inputBox('Raw data from KLE:', 'PlateGen', '')
             layout = layoutparser('['+returnValue+']')
-            r, r_cancelled = ui.inputBox('Enter corner radius', 'PlateGen', '0')
-        r = float(r.replace(',','.'))
+            r, r_cancelled = ui.inputBox('Enter corner radius (mm)', 'PlateGen', '0')
+        r = float(r.replace(',','.')) / 10
         if r > 7:
             r = 7
-
-        ui.messageBox("Plate generation might take some time (especially if using corner radius).\n\nBe patient :)\n", 'PlateGen')
 
         # Create process dialog
         total = 0
@@ -100,10 +98,10 @@ def run(context):
         # line1 = lines.addByTwoPoints(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(3, 1, 0))
         # line2 = lines.addByTwoPoints(line1.endSketchPoint, adsk.core.Point3D.create(1, 4, 0))
 
-        u = 19.05
+        u = 19.05 / 10
 
         x = 0
-        y = -1
+        y = 0
         w = 1
         h = 1
 
@@ -111,10 +109,17 @@ def run(context):
 
         progressDialog.show('PlateGen', 'Generating plate: %p%', 0, total, 1)
 
+        # draw single cutout and save it as collection
+        draw_rect(lines, arcs, x, y-1, w, h, u, r)
+        coll = adsk.core.ObjectCollection.create()
+        for crv in sketch.sketchCurves:
+            coll.add(crv)
+
         for row in layout:
             for item in row:
                 if isinstance(item, str):
-                    draw_rect(lines, arcs, x, y, w, h, u, r)
+                    # draw_rect(lines, arcs, x, y, w, h, u, r)
+                    copy_rect(sketch, coll, x, y, w, h, u)
                     x += w
                     w = 1
                     h = 1
@@ -136,10 +141,11 @@ def run(context):
             y -= 1
 
         # Create outline
-        lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * u, y * u + u, 0))
+        lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * u, y * u, 0))
 
-        # for row in layout:
-        #     ui.messageBox('{}'.format(row))
+        # Delete model cutout
+        for i in range(coll.count):
+            coll.item(i).deleteMe()
 
     except:
         if ui:
