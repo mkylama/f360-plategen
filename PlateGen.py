@@ -41,7 +41,7 @@ def run(context):
         app = adsk.core.Application.get()
         ui  = app.userInterface
 
-        debug = True
+        debug = False
 
         if debug:
             layout = [
