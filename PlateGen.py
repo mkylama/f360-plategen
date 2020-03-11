@@ -58,7 +58,8 @@ def run(context):
             ]
             r = '3'
         else:
-            returnValue, cancelled = ui.inputBox('Raw data from KLE:', 'PlateGen', '[{a:7},""]')
+            # returnValue, cancelled = ui.inputBox('Raw data from KLE:', 'PlateGen', '[{a:7},""]')
+            returnValue, cancelled = ui.inputBox('Raw data from KLE:', 'PlateGen', '')
             layout = layoutparser('['+returnValue+']')
             r, r_cancelled = ui.inputBox('Enter corner radius', 'PlateGen', '0')
         r = float(r.replace(',','.'))
