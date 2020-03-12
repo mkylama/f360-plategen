@@ -235,16 +235,16 @@ def draw_stab(lines, arcs, x, y, h, w):
             arcs,
             cx + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
             cy + d,
-            _s['w'],
-            _s['x-'] + _s['x+']
+            _s['x-'] + _s['x+'],
+            _s['w']
         )
         draw_rect(
             lines,
             arcs,
             cx + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
             cy - d,
-            _s['w'],
-            _s['x-'] + _s['x+']
+            _s['x-'] + _s['x+'],
+            _s['w']
         )
     else:
         draw_rect(
@@ -252,16 +252,16 @@ def draw_stab(lines, arcs, x, y, h, w):
             arcs,
             cx + d,
             cy + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
-            _s['x-'] + _s['x+'],
-            _s['w']
+            _s['w'],
+            _s['x-'] + _s['x+']
         )
         draw_rect(
             lines,
             arcs,
             cx - d,
             cy + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
-            _s['x-'] + _s['x+'],
-            _s['w']
+            _s['w'],
+            _s['x-'] + _s['x+']
         )
 
 
