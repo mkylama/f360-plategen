@@ -2,7 +2,6 @@
 Keyboard plate generator for Fusion 360
 
 ## TO-DO
-* Costar / Alps stabilizers
 * Rotated keys
 
 ## Installation

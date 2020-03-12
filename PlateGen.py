@@ -20,15 +20,7 @@ _u = 0
 _cw = 0
 _ch = 0
 _r = 0
-
-_s = {
-    'w': 6.75 / 10,
-    'd2': 11.94 / 10,
-    'd625': 50 / 10,
-    'd7': 57.15 / 10,
-    'x-': 8 / 10,
-    'x+': 6 / 10
-}
+_s = {}
 
 
 # Event handler for the commandCreated event.
@@ -55,7 +47,7 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
         switchTypeItems = switchType.listItems
         switchTypeItems.add('Cherry', True, '')
-        # switchTypeItems.add('Alps', False, '')
+        switchTypeItems.add('Alps', False, '')
         # switchTypeItems.add('Choc', False, '')
 
         # Slider to select radius between 0 to 2 mm 
@@ -106,7 +98,7 @@ class PlateGenExecuteHandler(adsk.core.CommandEventHandler):
 
 
 def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
-    global _u, _cw, _ch, _r
+    global _u, _cw, _ch, _r, _s
 
     app = adsk.core.Application.get()
     ui  = app.userInterface
@@ -119,6 +111,25 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
     else:
         _cw = 14 / 10
         _ch = 14 / 10
+
+    if stabilizerType == 'Alps':
+        _s = {
+            'w': 2.67 / 10,
+            'd2': 14 / 10,
+            'd625': 41.86 / 10,
+            'd7': 45.30 / 10,
+            'x-': 9.085 / 10,
+            'x+': -3.875 / 10
+        }
+    else:
+        _s = {
+            'w': 6.75 / 10,
+            'd2': 11.94 / 10,
+            'd625': 50 / 10,
+            'd7': 57.15 / 10,
+            'x-': 8 / 10,
+            'x+': 6 / 10
+        }
 
     layout = layoutparser('['+rawData+']')
 
