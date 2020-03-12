@@ -205,7 +205,7 @@ def layoutparser(layout):
     return ast.literal_eval(layout)
 
 
-def draw_rect(lines, arcs, cx, cy, h, w):
+def draw_rect(lines, arcs, cx, cy, w, h):
     angle = 90*(math.pi/180)
 
     if _r > 0:
