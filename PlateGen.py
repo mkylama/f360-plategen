@@ -46,7 +46,8 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Dropdown for stabilizer type
         switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
         switchTypeItems = switchType.listItems
-        switchTypeItems.add('Cherry', True, '')
+        switchTypeItems.add('MX', True, '')
+        switchTypeItems.add('MX - Large cutouts', False, '')
         switchTypeItems.add('Alps - AEK', False, '')
         switchTypeItems.add('Alps - AT101', False, '')
         # switchTypeItems.add('Choc', False, '')
@@ -113,14 +114,15 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
         _cw = 14 / 10
         _ch = 14 / 10
 
+    # Select dimension for correct stabilizer type
     if stabilizerType == 'Alps - AEK':
         _s = {
             'w': 2.67 / 10,
             'd2': 14 / 10,
             'd625': 41.86 / 10,
             'd7': 45.30 / 10,
-            'x-': 9.085 / 10,
-            'x+': -3.875 / 10
+            'h-': 9.085 / 10,
+            'h+': -3.875 / 10
         }
     elif stabilizerType == 'Alps - AT101':
         _s = {
@@ -129,17 +131,26 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
             'd275': 20.5 / 10,
             'd625': 41.86 / 10,
             'd7': 45.30 / 10,
-            'x-': 9.085 / 10,
-            'x+': -3.875 / 10
+            'h-': 9.085 / 10,
+            'h+': -3.875 / 10
+        }
+    elif stabilizerType == 'MX - Large cutouts':
+        _s = {
+            'w': 7 / 10,
+            'd2': 11.938 / 10,
+            'd625': 50 / 10,
+            'd7': 57.15 / 10,
+            'h-': 9 / 10,
+            'h+': 6 / 10
         }
     else:
         _s = {
             'w': 6.75 / 10,
-            'd2': 11.94 / 10,
+            'd2': 11.938 / 10,
             'd625': 50 / 10,
             'd7': 57.15 / 10,
-            'x-': 8 / 10,
-            'x+': 6 / 10
+            'h-': 8 / 10,
+            'h+': 6 / 10
         }
 
     layout = layoutparser('['+rawData+']')
@@ -257,17 +268,17 @@ def draw_stab(lines, arcs, x, y, h, w):
         draw_rect(
             lines,
             arcs,
-            cx + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
+            cx + _s['h+'] - (_s['h+'] + _s['h-']) / 2,
             cy + d,
-            _s['x-'] + _s['x+'],
+            _s['h-'] + _s['h+'],
             _s['w']
         )
         draw_rect(
             lines,
             arcs,
-            cx + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
+            cx + _s['h+'] - (_s['h+'] + _s['h-']) / 2,
             cy - d,
-            _s['x-'] + _s['x+'],
+            _s['h-'] + _s['h+'],
             _s['w']
         )
     else:
@@ -275,17 +286,17 @@ def draw_stab(lines, arcs, x, y, h, w):
             lines,
             arcs,
             cx + d,
-            cy + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
+            cy + _s['h+'] - (_s['h+'] + _s['h-']) / 2,
             _s['w'],
-            _s['x-'] + _s['x+']
+            _s['h-'] + _s['h+']
         )
         draw_rect(
             lines,
             arcs,
             cx - d,
-            cy + _s['x+'] - (_s['x+'] + _s['x-']) / 2,
+            cy + _s['h+'] - (_s['h+'] + _s['h-']) / 2,
             _s['w'],
-            _s['x-'] + _s['x+']
+            _s['h-'] + _s['h+']
         )
 
 
