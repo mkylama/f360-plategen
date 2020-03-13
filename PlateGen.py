@@ -48,9 +48,9 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         switchTypeItems = switchType.listItems
         switchTypeItems.add('MX', True, '')
         switchTypeItems.add('MX - Large cutouts', False, '')
+        switchTypeItems.add('Costar', False, '')
         switchTypeItems.add('Alps - AEK', False, '')
         switchTypeItems.add('Alps - AT101', False, '')
-        switchTypeItems.add('Costar', False, '')
         # switchTypeItems.add('Choc', False, '')
 
         # Slider to select radius between 0 to 2 mm 
@@ -58,7 +58,7 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         for i in range(41):
             floatValueList.append(i/200)
         radius = inputs.addFloatSliderListCommandInput('cornerRadius', 
-                                                       'Corner radius', 
+                                                       'Cutout fillets', 
                                                        'mm',
                                                        floatValueList)
 
