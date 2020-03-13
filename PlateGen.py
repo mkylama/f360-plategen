@@ -47,7 +47,8 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
         switchTypeItems = switchType.listItems
         switchTypeItems.add('Cherry', True, '')
-        switchTypeItems.add('Alps', False, '')
+        switchTypeItems.add('Alps - AEK', False, '')
+        switchTypeItems.add('Alps - AT101', False, '')
         # switchTypeItems.add('Choc', False, '')
 
         # Slider to select radius between 0 to 2 mm 
@@ -112,10 +113,20 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
         _cw = 14 / 10
         _ch = 14 / 10
 
-    if stabilizerType == 'Alps':
+    if stabilizerType == 'Alps - AEK':
         _s = {
             'w': 2.67 / 10,
             'd2': 14 / 10,
+            'd625': 41.86 / 10,
+            'd7': 45.30 / 10,
+            'x-': 9.085 / 10,
+            'x+': -3.875 / 10
+        }
+    elif stabilizerType == 'Alps - AT101':
+        _s = {
+            'w': 2.67 / 10,
+            'd2': 14 / 10,
+            'd275': 20.5 / 10,
             'd625': 41.86 / 10,
             'd7': 45.30 / 10,
             'x-': 9.085 / 10,
@@ -233,10 +244,12 @@ def draw_stab(lines, arcs, x, y, h, w):
     cy = y * _u - _u / 2 - (h - 1) * _u / 2
 
     # select correct stab size
-    if h >= 7 or w >= 7:
+    if (h >= 7 or w >= 7) and 'd7' in _s:
         d = _s['d7']
-    elif h >= 6 or w >= 6:
+    elif (h >= 6 or w >= 6) and 'd625' in _s:
         d = _s['d625']
+    elif (h >= 2.75 or w >= 2.75) and 'd275' in _s:
+        d = _s['d275']
     else:
         d = _s['d2']
 
