@@ -223,12 +223,12 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
         x = 0
         y -= 1
 
-    # Create outline
-    lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * _u, y * _u, 0))
-
     # Delete model cutout
     for i in range(coll.count):
         coll.item(i).deleteMe()
+
+    # Create outline
+    lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * _u, y * _u, 0))
 
 
 
