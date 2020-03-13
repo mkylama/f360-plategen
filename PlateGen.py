@@ -234,6 +234,9 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
 
 def layoutparser(layout):
     layout = re.sub(r'(\w+):', r'"\1":', layout)
+    layout = layout.replace('true', 'True')
+    layout = layout.replace('false', 'False')
+
 
     return ast.literal_eval(layout)
 
