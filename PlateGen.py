@@ -50,6 +50,7 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         switchTypeItems.add('MX - Large cutouts', False, '')
         switchTypeItems.add('Alps - AEK', False, '')
         switchTypeItems.add('Alps - AT101', False, '')
+        switchTypeItems.add('Costar', False, '')
         # switchTypeItems.add('Choc', False, '')
 
         # Slider to select radius between 0 to 2 mm 
@@ -133,6 +134,15 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
             'd7': 45.30 / 10,
             'h-': 9.085 / 10,
             'h+': -3.875 / 10
+        }
+    elif stabilizerType == 'Costar':
+        _s = {
+            'w': 3.3 / 10,
+            'd2': 11.938 / 10,
+            'd625': 50 / 10,
+            'd7': 57.15 / 10,
+            'h-': 7.75 / 10,
+            'h+': 6.45 / 10
         }
     elif stabilizerType == 'MX - Large cutouts':
         _s = {
@@ -242,7 +252,7 @@ def layoutparser(layout):
 
 
 def draw_rect(lines, arcs, cx, cy, w, h):
-    angle = 90*(math.pi/180)
+    angle = rad(90)
 
     if _r > 0:
         rect = lines.addCenterPointRectangle(adsk.core.Point3D.create(cx, cy, 0), adsk.core.Point3D.create(cx + w / 2, cy + h / 2, 0))
@@ -309,9 +319,13 @@ def copy_cutout(sketch, coll, x, y, w, h,):
     new = sketch.copy(coll, transform)
     if h > w and _cw != _ch:
         rotX = adsk.core.Matrix3D.create()
-        rotX.setToRotation(90*(math.pi/180), adsk.core.Vector3D.create(0, 0, 1), adsk.core.Point3D.create(x * _u + (w - 1) * _u / 2 + _u / 2, y * _u - (h - 1) * _u / 2 - _u / 2, 0))
+        rotX.setToRotation(rad(90), adsk.core.Vector3D.create(0, 0, 1), adsk.core.Point3D.create(x * _u + (w - 1) * _u / 2 + _u / 2, y * _u - (h - 1) * _u / 2 - _u / 2, 0))
         transform.transformBy(rotX)
         sketch.move(new, rotX)
+
+
+def rad(degree):
+    return degree*(math.pi/180)
 
 
 def run(context):
