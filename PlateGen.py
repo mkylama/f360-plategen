@@ -223,21 +223,22 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOu
 
     # Iterate all the keys
     for key in keys:
-        copy_cutout(sketch, coll, key)
+        if key['decal'] == False:
+            copy_cutout(sketch, coll, key)
 
-        if max(key['width'], key['height']) >= 2:
-            draw_stab(sketch, lines, arcs, key)
+            if max(key['width'], key['height']) >= 2:
+                draw_stab(sketch, lines, arcs, key)
 
-        if key['x'] + key['width'] > x_max:
-            x_max = key['x'] + key['width']
-        if key['y'] + key['height'] > y_max:
-            y_max = key['y'] + key['height']
+            if key['x'] + key['width'] > x_max:
+                x_max = key['x'] + key['width']
+            if key['y'] + key['height'] > y_max:
+                y_max = key['y'] + key['height']
 
 
-        if key['x'] < x_min:
-            x_min = key['x']
-        if key['y'] < y_min:
-            y_min = key['y']
+            if key['x'] < x_min:
+                x_min = key['x']
+            if key['y'] < y_min:
+                y_min = key['y']
 
         # process dialog
         if progressDialog.wasCancelled:
