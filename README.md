@@ -2,7 +2,8 @@
 Keyboard plate generator for Fusion 360
 
 ## TO-DO
-* Rotated keys
+* Stabilizers with rotated keys
+* Flipped stabilizers
 
 ## Installation
 ### Windows
