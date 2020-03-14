@@ -2,7 +2,10 @@
 Keyboard plate generator for Fusion 360
 
 ## TO-DO
-* Flipped stabilizers
+* Flipped stabilizers  (_rs:180)
+* Outline
+  * Box currently only supports layouts without rotated keys
+  * Around clusters does nothing for now, but should in the future wrap separate key cluster with individual outlines 
 
 ## Installation
 ### Windows
