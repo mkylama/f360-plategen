@@ -11,7 +11,7 @@ import json
 from . import kle
 
 
-debug = False
+debug = True
 
 
 # Global list to keep all event handlers in scope.
@@ -69,10 +69,10 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         if debug:
             # rawDataDefault = '[{x:0.25,a:7,w:1.25},""],[{y:-0.75,x:1.75,h:1.25},""],[{h:1.5},""],[{y:-0.25,x:1.25,w:1.25},""]'
             # rawDataDefault = '[{a:7},"","","","","","","","","","","","","",{w:2},""],[{w:1.5},"","","","","","","","","","","","","",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:1.75},"","","","","","","","","","","","",""],[{w:1.25},"","","","","","","","","","","","",{w:2.75},""],[{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:6.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},""]'
-            # rawDataDefault = '[{a:7,w:2.75},"",{w:1.25},"",{w:2},"",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:6.25},""]'
+            rawDataDefault = '[{a:7,w:2.75},"",{w:1.25},"",{w:2},"",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:6.25},""]'
             # rawDataDefault = '[{y:0.5,x:4,a:7},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # tilt test
             # rawDataDefault = '[{a:7},"",""],["",{x:1},""],[{x:1},"",""],[{r:30,rx:0.5,ry:2.5,y:-0.5,x:-0.5},""],[{r:45,rx:1.5,ry:1.5,y:-0.5,x:-0.5},""],[{r:60,rx:2.5,ry:0.5,y:-0.5,x:-0.5},""]' # 3x3
-            rawDataDefault = '[{a:7},"",{x:7},""],[{x:4},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # wings
+            # rawDataDefault = '[{a:7},"",{x:7},""],[{x:4},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # wings
             # rawDataDefault = '[{a:7},"",""],["",""]' # 2x2
         inputs.addTextBoxCommandInput('rawData', 'KLE raw data', rawDataDefault, 20, False)
 
@@ -208,6 +208,9 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
     for key in keys:
         copy_cutout(sketch, coll, key)
 
+        if max(key['width'], key['height']) >= 2:
+            draw_stab(lines, arcs, key)
+
         # process dialog
         if progressDialog.wasCancelled:
             break
@@ -242,25 +245,22 @@ def draw_rect(lines, arcs, cx, cy, w, h):
         lines.addCenterPointRectangle(adsk.core.Point3D.create(cx, cy, 0), adsk.core.Point3D.create(cx + w / 2, cy + h / 2, 0))
 
 
-def draw_stab(lines, arcs, x, y, data):
-    w = data['w']
-    h = data['h']
-
+def draw_stab(lines, arcs, key):
     # calculate switch center 
-    cx = x * _u + (w - 1) * _u / 2 + _u / 2
-    cy = y * _u - _u / 2 - (h - 1) * _u / 2
+    cx = (key['x'] + key['width'] / 2) * _u
+    cy = (key['y'] + key['height'] / 2) * -_u
 
     # select correct stab size
-    if (h >= 7 or w >= 7) and 'd7' in _s:
+    if max(key['width'], key['height']) >= 7 and 'd7' in _s:
         d = _s['d7']
-    elif (h >= 6 or w >= 6) and 'd625' in _s:
+    elif max(key['width'], key['height']) >= 6 and 'd625' in _s:
         d = _s['d625']
-    elif (h >= 2.75 or w >= 2.75) and 'd275' in _s:
+    elif max(key['width'], key['height']) >= 2.75 and 'd275' in _s:
         d = _s['d275']
     else:
         d = _s['d2']
 
-    if h > w:
+    if  key['height'] > key['width']:
         draw_rect(
             lines,
             arcs,
