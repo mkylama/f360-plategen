@@ -7,6 +7,8 @@ import math
 import re
 import ast
 from html import unescape
+import json
+from . import kle
 
 
 debug = False
@@ -19,7 +21,7 @@ handlers = []
 _u = 0
 _cw = 0
 _ch = 0
-_r = 0
+_f = 0
 _s = {}
 
 
@@ -65,9 +67,13 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # KLE raw data
         rawDataDefault = ''
         if debug:
-            rawDataDefault = '[{x:0.25,a:7,w:1.25},""],[{y:-0.75,x:1.75,h:1.25},""],[{h:1.5},""],[{y:-0.25,x:1.25,w:1.25},""]'
-            rawDataDefault = '[{a:7},"",{x:1},"","","","",{x:0.5},"","","","",{x:0.5},"","","","",{x:1.5},"","","",""],[{y:0.5},"","","","","","","","","","","","","",{w:2},"",{x:0.25},"",{x:0.25},"","","",""],[{w:1.5},"","","","","","","","","","","","","",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},"",{x:0.25},"",{x:0.25},"","","",{h:2},""],[{w:1.75},"","","","","","","","","","","","","",{x:2.75},"","",""],[{w:1.25},"","","","","","","","","","","","",{w:2.75},"",{x:1.5},"","","",{h:2},""],[{y:-0.75,x:15.25},""],[{y:-0.25,w:1.5},"","",{w:1.5},"",{w:7},"",{w:1.5},"",{w:1.5},"",{x:3.5},"",""],[{y:-0.75,x:14.25},"","",""]'
-            rawDataDefault = '[{a:7,w:2.75},"",{w:1.25},"",{w:2},"",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:6.25},""]'
+            # rawDataDefault = '[{x:0.25,a:7,w:1.25},""],[{y:-0.75,x:1.75,h:1.25},""],[{h:1.5},""],[{y:-0.25,x:1.25,w:1.25},""]'
+            # rawDataDefault = '[{a:7},"","","","","","","","","","","","","",{w:2},""],[{w:1.5},"","","","","","","","","","","","","",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:1.75},"","","","","","","","","","","","",""],[{w:1.25},"","","","","","","","","","","","",{w:2.75},""],[{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:6.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},""]'
+            # rawDataDefault = '[{a:7,w:2.75},"",{w:1.25},"",{w:2},"",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:6.25},""]'
+            # rawDataDefault = '[{y:0.5,x:4,a:7},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # tilt test
+            # rawDataDefault = '[{a:7},"",""],["",{x:1},""],[{x:1},"",""],[{r:30,rx:0.5,ry:2.5,y:-0.5,x:-0.5},""],[{r:45,rx:1.5,ry:1.5,y:-0.5,x:-0.5},""],[{r:60,rx:2.5,ry:0.5,y:-0.5,x:-0.5},""]' # 3x3
+            rawDataDefault = '[{a:7},"",{x:7},""],[{x:4},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # wings
+            # rawDataDefault = '[{a:7},"",""],["",""]' # 2x2
         inputs.addTextBoxCommandInput('rawData', 'KLE raw data', rawDataDefault, 20, False)
 
         # Connect to the execute event.
@@ -101,13 +107,13 @@ class PlateGenExecuteHandler(adsk.core.CommandEventHandler):
 
 
 def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
-    global _u, _cw, _ch, _r, _s
+    global _u, _cw, _ch, _f, _s
 
     app = adsk.core.Application.get()
     ui  = app.userInterface
 
     _u = 19.05 / 10
-    _r = cornerRadius
+    _f = cornerRadius
     if switchType == 'Alps':
         _cw = 15.5 / 10
         _ch = 12.8 / 10
@@ -166,12 +172,6 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
     layout = layoutparser('['+rawData+']')
 
     # Create process dialog
-    total = 0
-    current = 0
-
-    for row in layout:
-        total += len(row)
-
     progressDialog = ui.createProgressDialog()
     progressDialog.cancelButtonText = 'Cancel'
     progressDialog.isBackgroundTranslucent = False
@@ -192,53 +192,34 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData):
     lines = sketch.sketchCurves.sketchLines;
     arcs = sketch.sketchCurves.sketchArcs;
 
-    x = 0
-    y = 0
-    w = 1
-    h = 1
-
-    x_max = 0
-
-    progressDialog.show('PlateGen', 'Generating plate: %p%', 0, total, 1)
-
     # draw single cutout and save it as collection
     draw_rect(lines, arcs, _u / 2, -_u / 2, _cw, _ch)
     coll = adsk.core.ObjectCollection.create()
     for crv in sketch.sketchCurves:
         coll.add(crv)
 
-    for row in layout:
-        for item in row:
-            if isinstance(item, str):
-                copy_cutout(sketch, coll, x, y, w, h)
-                if w >= 2 or h >= 2:
-                    draw_stab(lines, arcs, x, y, h, w)
-                x += w
-                w = 1
-                h = 1
-            elif isinstance(item, dict):
-                if 'x' in item:
-                    x += item['x']
-                if 'y' in item:
-                    y -= item['y']
-                if 'w' in item:
-                    w = item['w']
-                if 'h' in item:
-                    h = item['h']
+    # get keys from leayout
+    keys = kle.deserialize(layout)
 
-            current += 1
-            progressDialog.progressValue = current
-        if x > x_max:
-            x_max = x
-        x = 0
-        y -= 1
+    current = 0
+    total = len(keys)
+    progressDialog.show('PlateGen', 'Generating plate: %p%', 0, total, 1)
+
+    for key in keys:
+        copy_cutout(sketch, coll, key)
+
+        # process dialog
+        if progressDialog.wasCancelled:
+            break
+        current += 1
+        progressDialog.progressValue = current
 
     # Delete model cutout
     for i in range(coll.count):
         coll.item(i).deleteMe()
 
     # Create outline
-    lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * _u, y * _u, 0))
+    # lines.addTwoPointRectangle(adsk.core.Point3D.create(0, 0, 0), adsk.core.Point3D.create(x_max * _u, y_min * _u, 0))
 
 
 
@@ -247,22 +228,24 @@ def layoutparser(layout):
     layout = layout.replace('true', 'True')
     layout = layout.replace('false', 'False')
 
-
     return ast.literal_eval(layout)
 
 
 def draw_rect(lines, arcs, cx, cy, w, h):
     angle = rad(90)
 
-    if _r > 0:
+    if _f > 0:
         rect = lines.addCenterPointRectangle(adsk.core.Point3D.create(cx, cy, 0), adsk.core.Point3D.create(cx + w / 2, cy + h / 2, 0))
         for i in range(4):
-            arcs.addFillet(rect.item(i), rect.item(i).endSketchPoint.geometry, rect.item((i+1)%4), rect.item((i+1)%4).startSketchPoint.geometry, _r)
+            arcs.addFillet(rect.item(i), rect.item(i).endSketchPoint.geometry, rect.item((i+1)%4), rect.item((i+1)%4).startSketchPoint.geometry, _f)
     else:
         lines.addCenterPointRectangle(adsk.core.Point3D.create(cx, cy, 0), adsk.core.Point3D.create(cx + w / 2, cy + h / 2, 0))
 
 
-def draw_stab(lines, arcs, x, y, h, w):
+def draw_stab(lines, arcs, x, y, data):
+    w = data['w']
+    h = data['h']
+
     # calculate switch center 
     cx = x * _u + (w - 1) * _u / 2 + _u / 2
     cy = y * _u - _u / 2 - (h - 1) * _u / 2
@@ -313,19 +296,66 @@ def draw_stab(lines, arcs, x, y, h, w):
         )
 
 
-def copy_cutout(sketch, coll, x, y, w, h,):
+def copy_cutout(sketch, coll, key):
+    # copy and move cutout
+    transform = adsk.core.Matrix3D.create()
+    transform.translation = adsk.core.Vector3D.create(
+        (key['x'] + (key['width'] - 1) / 2) * _u,
+        (key['y'] + (key['height'] - 1) / 2) * -_u,
+        0
+    )
+    new = sketch.copy(coll, transform)
+
+    # handle cutout rotation
+    if key['height'] > key['width']:
+        rotate = adsk.core.Matrix3D.create()
+        rotate.setToRotation(
+            rad(90),
+            adsk.core.Vector3D.create(0, 0, 1),
+            adsk.core.Point3D.create(
+                (key['x'] + key['width'] / 2) * _u,
+                (key['y'] + key['height'] / 2) * -_u,
+                0)
+            )
+        sketch.move(new, rotate)
+
+    # handle positioning rotation
+    if key['rotation_angle'] != 0:
+        rotate = adsk.core.Matrix3D.create()
+        rotate.setToRotation(
+            rad(key['rotation_angle']),
+            adsk.core.Vector3D.create(0, 0, 1),
+            adsk.core.Point3D.create(
+                key['rotation_x'] * _u,
+                key['rotation_y'] * -_u,
+                0)
+            )
+        sketch.move(new, rotate)
+
+
+
+def copy_cutout_old(sketch, coll, x, y, data):
+    w = data['w']
+    h = data['h']
+
     transform = adsk.core.Matrix3D.create()
     transform.translation = adsk.core.Vector3D.create(x * _u + (w - 1) * _u / 2, y * _u - (h - 1) * _u / 2, 0)
     new = sketch.copy(coll, transform)
-    if h > w and _cw != _ch:
-        rotX = adsk.core.Matrix3D.create()
-        rotX.setToRotation(rad(90), adsk.core.Vector3D.create(0, 0, 1), adsk.core.Point3D.create(x * _u + (w - 1) * _u / 2 + _u / 2, y * _u - (h - 1) * _u / 2 - _u / 2, 0))
-        transform.transformBy(rotX)
-        sketch.move(new, rotX)
+
+    if 'r' in data:
+        rotate = adsk.core.Matrix3D.create()
+        rotate.setToRotation(rad(data['r']), adsk.core.Vector3D.create(0, 0, 1), adsk.core.Point3D.create(data['rx'] * _u, data['ry'] * -_u, 0))
+        sketch.move(new, rotate)
+
+    # if h > w and _cw != _ch:
+    #     rotate = adsk.core.Matrix3D.create()
+    #     rotate.setToRotation(rad(90), adsk.core.Vector3D.create(0, 0, 1), adsk.core.Point3D.create(x * _u + (w - 1) * _u / 2 + _u / 2, y * _u - (h - 1) * _u / 2 - _u / 2, 0))
+    #     transform.transformBy(rotate)
+    #     sketch.move(new, rotate)
 
 
 def rad(degree):
-    return degree*(math.pi/180)
+    return -degree*(math.pi/180)
 
 
 def run(context):
