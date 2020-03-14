@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #Author-MigiBacon
 #Description-
 
@@ -253,12 +254,15 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOu
         lines.addTwoPointRectangle(adsk.core.Point3D.create(x_min * _u, y_min * -_u), adsk.core.Point3D.create(x_max * _u, y_max * -_u, 0))
 
 
-
 def layoutparser(layout):
+    layout = layout.replace('\\\\', '')
+    layout = layout.replace('\\\"', '')
+    layout = layout.replace('\n', '')
+    layout = re.sub(r'\".*?\"', '\"\"', layout)
     layout = re.sub(r'(\w+):', r'"\1":', layout)
     layout = layout.replace('true', 'True')
     layout = layout.replace('false', 'False')
-
+    
     return ast.literal_eval(layout)
 
 
