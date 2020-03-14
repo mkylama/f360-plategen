@@ -1,11 +1,9 @@
 #Author-MigiBacon
 #Description-
 
-from copy import deepcopy
-
 
 def copy(d):
-    return deepcopy(d)
+    return dict(d)
 
 
 _defaultKeyProps = {
