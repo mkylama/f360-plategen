@@ -1,6 +1,8 @@
 # f360-plategen
 Keyboard plate generator for Fusion 360
 
+Disclaimer: This tool is mainly made for my personal use, so doublecheck measurements (especially stabilizer related) before ordering a plate.
+
 ## TO-DO
 * Flipped stabilizers  (_rs:180)
 * Outline
