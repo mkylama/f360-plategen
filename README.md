@@ -16,3 +16,8 @@ Save files from repository to: `C:\Users\[username]\AppData\Roaming\Autodesk\Aut
 Appdata\Roaming folder can be accessed with command `%appdata`.
 
 [How to install an add-in or script in Fusion 360](https://knowledge.autodesk.com/support/fusion-360/troubleshooting/caas/sfdcarticles/sfdcarticles/How-to-install-an-ADD-IN-and-Script-in-Fusion-360.html)
+
+## Changes
+* [2021-05-29]
+  * Removed smaller mx stabilizer cutout
+  * Changed width of large mx stabilizer cutout from 7mm to 7.5mm for better clearance with durock stabilizers
