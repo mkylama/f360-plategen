@@ -49,8 +49,8 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Dropdown for stabilizer type
         switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
         switchTypeItems = switchType.listItems
-        switchTypeItems.add('MX', True, '')
-        switchTypeItems.add('MX - Large cutouts', False, '')
+        #switchTypeItems.add('MX', True, '')
+        switchTypeItems.add('MX - Large cutouts', True, '')
         switchTypeItems.add('Costar', False, '')
         switchTypeItems.add('Alps - AEK', False, '')
         switchTypeItems.add('Alps - AT101', False, '')
@@ -159,24 +159,24 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOu
             'h-': 7.75 / 10,
             'h+': 6.45 / 10
         }
-    elif stabilizerType == 'MX - Large cutouts':
+    else: #elif stabilizerType == 'MX - Large cutouts':
         _s = {
-            'w': 7 / 10,
+            'w': 7.5 / 10,
             'd2': 11.938 / 10,
             'd625': 50 / 10,
             'd7': 57.15 / 10,
             'h-': 9 / 10,
             'h+': 6 / 10
         }
-    else:
-        _s = {
-            'w': 6.75 / 10,
-            'd2': 11.938 / 10,
-            'd625': 50 / 10,
-            'd7': 57.15 / 10,
-            'h-': 8 / 10,
-            'h+': 6 / 10
-        }
+    # else:
+    #     _s = {
+    #         'w': 6.75 / 10,
+    #         'd2': 11.938 / 10,
+    #         'd625': 50 / 10,
+    #         'd7': 57.15 / 10,
+    #         'h-': 8 / 10,
+    #         'h+': 6 / 10
+    #     }
 
     layout = layoutparser('['+rawData+']')
 
