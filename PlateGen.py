@@ -12,7 +12,7 @@ import json
 from . import kle
 
 
-debug = True
+debug = False
 
 
 # Global list to keep all event handlers in scope.
