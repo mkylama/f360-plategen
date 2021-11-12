@@ -12,7 +12,7 @@ import json
 from . import kle
 
 
-debug = False
+debug = True
 
 
 # Global list to keep all event handlers in scope.
@@ -20,6 +20,8 @@ debug = False
 handlers = []
 
 _u = 0
+_ux = 0
+_uy = 0
 _cw = 0
 _ch = 0
 _f = 0
@@ -40,14 +42,14 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         inputs = cmd.commandInputs
 
         # Dropdown for switch type
-        switchType = inputs.addDropDownCommandInput('switchType', 'Switch type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
+        switchType = inputs.addDropDownCommandInput('switchType', 'Switch type', adsk.core.DropDownStyles.LabeledIconDropDownStyle)
         switchTypeItems = switchType.listItems
         switchTypeItems.add('Cherry MX', True, '')
         switchTypeItems.add('Alps', False, '')
-        # switchTypeItems.add('Choc', False, '')
+        switchTypeItems.add('Choc', False, '')
 
         # Dropdown for stabilizer type
-        switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
+        switchType = inputs.addDropDownCommandInput('stabilizerType', 'Stabilizer type', adsk.core.DropDownStyles.LabeledIconDropDownStyle)
         switchTypeItems = switchType.listItems
         #switchTypeItems.add('MX', True, '')
         switchTypeItems.add('MX - Large cutouts', True, '')
@@ -56,31 +58,41 @@ class PlateGenCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         switchTypeItems.add('Alps - AT101', False, '')
         # switchTypeItems.add('Choc', False, '')
 
-        # Slider to select radius between 0 to 2 mm 
-        floatValueList = []
-        for i in range(41):
-            floatValueList.append(i/200)
-        radius = inputs.addFloatSliderListCommandInput('cornerRadius', 
-                                                       'Cutout fillets', 
-                                                       'mm',
-                                                       floatValueList)
+        spacingGroup = inputs.addGroupCommandInput('spacing', 'Switch spacing')
+        spacingGroup.isExpanded = True
+        spacingGroupChildren = spacingGroup.children
+
+        spacingGroupChildren.addValueInput('spacingX', 'Spacing x', 'mm', adsk.core.ValueInput.createByReal(1.905))
+        spacingGroupChildren.addValueInput('spacingY', 'Spacing y', 'mm', adsk.core.ValueInput.createByReal(1.905))
+
+        cutoutGroup = inputs.addGroupCommandInput('cutoutOverride', 'Cutouts (Override switch type)')
+        cutoutGroup.isExpanded = False
+        cutoutGroup.isEnabledCheckBoxDisplayed = True
+        cutoutGroup.isEnabledCheckBoxChecked = False
+        cutoutGroupChildren = cutoutGroup.children
+
+        cutoutGroupChildren.addValueInput('cutoutX', 'Cutout width', 'mm', adsk.core.ValueInput.createByReal(1.4))
+        cutoutGroupChildren.addValueInput('cutoutY', 'Cutout height', 'mm', adsk.core.ValueInput.createByReal(1.4))
+
+        inputs.addValueInput('cornerRadius', 'Cutout fillets', 'mm', adsk.core.ValueInput.createByReal(0))
+
 
         # Outline
-        switchType = inputs.addDropDownCommandInput('outlineType', 'Outline', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
+        switchType = inputs.addDropDownCommandInput('outlineType', 'Outline', adsk.core.DropDownStyles.LabeledIconDropDownStyle)
         switchTypeItems = switchType.listItems
-        switchTypeItems.add('Box (beta)', True, '')
-        switchTypeItems.add('Around clusters (beta)', False, '')
-        switchTypeItems.add('No', False, '')
+        switchTypeItems.add('No', True, '')
+        switchTypeItems.add('Box (beta)', False, '')
+        # switchTypeItems.add('Around clusters (beta)', False, '')
 
         # KLE raw data
         rawDataDefault = ''
         if debug:
             # rawDataDefault = '[{x:0.25,a:7,w:1.25},""],[{y:-0.75,x:1.75,h:1.25},""],[{h:1.5},""],[{y:-0.25,x:1.25,w:1.25},""]'
-            # rawDataDefault = '[{a:7},"","","","","","","","","","","","","",{w:2},""],[{w:1.5},"","","","","","","","","","","","","",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:1.75},"","","","","","","","","","","","",""],[{w:1.25},"","","","","","","","","","","","",{w:2.75},""],[{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:6.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},""]'
+            rawDataDefault = '[{a:7},"","","","","","","","","","","","","",{w:2},""],[{w:1.5},"","","","","","","","","","","","","",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:1.75},"","","","","","","","","","","","",""],[{w:1.25},"","","","","","","","","","","","",{w:2.75},""],[{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:6.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},"",{w:1.25},""]'
             # rawDataDefault = '[{a:7,w:2.75},"",{w:1.25},"",{w:2},"",{x:0.25,w:1.25,h:2,w2:1.5,h2:1,x2:-0.25},""],[{w:6.25},""]'
             # rawDataDefault = '[{y:0.5,x:4,a:7},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # tilt test
             # rawDataDefault = '[{a:7},"",""],["",{x:1},""],[{x:1},"",""],[{r:30,rx:0.5,ry:2.5,y:-0.5,x:-0.5},""],[{r:45,rx:1.5,ry:1.5,y:-0.5,x:-0.5},""],[{r:60,rx:2.5,ry:0.5,y:-0.5,x:-0.5},""]' # 3x3
-            rawDataDefault = '[{a:7},"",{x:7},""],[{x:4},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # wings
+            # rawDataDefault = '[{a:7},"",{x:7},""],[{x:4},""],[{r:15,y:-2,x:1,w:2},"1","3"],[{x:1},"4","5","6"],[{r:-15,rx:9,x:-4},"7",{w:2},"8"],[{x:-4},"10","11","12"]' # wings
             # rawDataDefault = '[{a:7},"",""],["",""]' # 2x2
         inputs.addTextBoxCommandInput('rawData', 'KLE raw data', rawDataDefault, 20, False)
 
@@ -106,7 +118,12 @@ class PlateGenExecuteHandler(adsk.core.CommandEventHandler):
             generate_plate(
                 inputs.itemById('switchType').selectedItem.name,
                 inputs.itemById('stabilizerType').selectedItem.name,
-                inputs.itemById('cornerRadius').valueOne,
+                inputs.itemById('cornerRadius').value,
+                inputs.itemById('spacingX').value,
+                inputs.itemById('spacingY').value,
+                inputs.itemById('cutoutOverride').isEnabledCheckBoxChecked,
+                inputs.itemById('cutoutX').value,
+                inputs.itemById('cutoutY').value,
                 unescape(inputs.itemById('rawData').text),
                 inputs.itemById('outlineType').selectedItem.name
             )
@@ -115,17 +132,26 @@ class PlateGenExecuteHandler(adsk.core.CommandEventHandler):
                 ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOutline):
-    global _u, _cw, _ch, _f, _s
+def generate_plate(switchType, stabilizerType, cornerRadius, spacingX, spacingY, cutoutOverride, cutoutX, cutoutY, rawData, generateOutline):
+    global _u, _ux, _uy, _cw, _ch, _f, _s
 
     app = adsk.core.Application.get()
     ui  = app.userInterface
 
-    _u = 19.05 / 10
+    _u = spacingX
+    _ux = spacingX
+    _uy = spacingY
     _f = cornerRadius
-    if switchType == 'Alps':
+
+    if cutoutOverride:
+        _cw = cutoutX
+        _ch = cutoutY
+    elif switchType == 'Alps':
         _cw = 15.5 / 10
         _ch = 12.8 / 10
+    elif switchType == 'Choc':
+        _cw = 13.8 / 10
+        _ch = 13.8 / 10
     else:
         _cw = 14 / 10
         _ch = 14 / 10
@@ -203,7 +229,7 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOu
     arcs = sketch.sketchCurves.sketchArcs;
 
     # draw single cutout and save it as collection
-    draw_rect(sketch, lines, arcs, _u / 2, -_u / 2, _cw, _ch)
+    draw_rect(sketch, lines, arcs, _ux / 2, -_uy / 2, _cw, _ch)
     coll = adsk.core.ObjectCollection.create()
     for crv in sketch.sketchCurves:
         coll.add(crv)
@@ -252,7 +278,7 @@ def generate_plate(switchType, stabilizerType, cornerRadius, rawData, generateOu
 
     # Create Box outline
     if generateOutline.startswith('Box'):
-        lines.addTwoPointRectangle(adsk.core.Point3D.create(x_min * _u, y_min * -_u), adsk.core.Point3D.create(x_max * _u, y_max * -_u, 0))
+        lines.addTwoPointRectangle(adsk.core.Point3D.create(x_min * _ux, y_min * -_uy), adsk.core.Point3D.create(x_max * _ux, y_max * -_uy, 0))
 
 
 def layoutparser(layout):
@@ -281,8 +307,8 @@ def draw_rect(sketch, lines, arcs, cx, cy, w, h):
 
 def draw_stab(sketch, lines, arcs, key):
     # calculate switch center 
-    cx = (key['x'] + key['width'] / 2) * _u
-    cy = (key['y'] + key['height'] / 2) * -_u
+    cx = (key['x'] + key['width'] / 2) * _ux
+    cy = (key['y'] + key['height'] / 2) * -_uy
 
     # select correct stab size
     if max(key['width'], key['height']) >= 7 and 'd7' in _s:
@@ -322,11 +348,11 @@ def draw_stab(sketch, lines, arcs, key):
 
     # Stabilizer rotation
     if key['height'] > key['width']:
-        rotate(sketch, rcoll, (key['x'] + key['width'] / 2) * _u, (key['y'] + key['height'] / 2) * -_u, 90)
+        rotate(sketch, rcoll, (key['x'] + key['width'] / 2) * _ux, (key['y'] + key['height'] / 2) * -_uy, 90)
 
     # Positional rotation
     if key['rotation_angle'] != 0:
-        rotate(sketch, rcoll, key['rotation_x'] * _u, key['rotation_y'] * -_u, key['rotation_angle'])
+        rotate(sketch, rcoll, key['rotation_x'] * _ux, key['rotation_y'] * -_uy, key['rotation_angle'])
 
 
 
@@ -334,19 +360,19 @@ def copy_cutout(sketch, coll, key):
     # copy and move cutout
     transform = adsk.core.Matrix3D.create()
     transform.translation = adsk.core.Vector3D.create(
-        (key['x'] + (key['width'] - 1) / 2) * _u,
-        (key['y'] + (key['height'] - 1) / 2) * -_u,
+        (key['x'] + (key['width'] - 1) / 2) * _ux,
+        (key['y'] + (key['height'] - 1) / 2) * -_uy,
         0
     )
     new = sketch.copy(coll, transform)
 
     # handle cutout rotation
     if key['height'] > key['width']:
-        rotate(sketch, new, (key['x'] + key['width'] / 2) * _u, (key['y'] + key['height'] / 2) * -_u, 90)
+        rotate(sketch, new, (key['x'] + key['width'] / 2) * _ux, (key['y'] + key['height'] / 2) * -_uy, 90)
 
     # handle positioning rotation
     if key['rotation_angle'] != 0:
-        rotate(sketch, new, key['rotation_x'] * _u, key['rotation_y'] * -_u, key['rotation_angle'])
+        rotate(sketch, new, key['rotation_x'] * _ux, key['rotation_y'] * -_uy, key['rotation_angle'])
 
 
 def rotate(sketch, coll, cx, cy, angle):
